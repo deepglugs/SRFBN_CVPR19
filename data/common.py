@@ -1,13 +1,12 @@
 ﻿import os
 import random
 import numpy as np
-import scipy.misc as misc
-import imageio
+from PIL import Image
 from tqdm import tqdm
 
 import torch
 
-IMG_EXTENSIONS = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP']
+IMG_EXTENSIONS = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP', 'webp', 'WEBP']
 BINARY_EXTENSIONS = ['.npy']
 BENCHMARK = ['Set5', 'Set14', 'B100', 'Urban100', 'Manga109', 'DIV2K', 'DF2K']
 
@@ -90,7 +89,8 @@ def read_img(path, data_type):
     # read image by misc or from .npy
     # return: Numpy float32, HWC, RGB, [0,255]
     if data_type == 'img':
-        img = imageio.imread(path, pilmode='RGB')
+        img = Image.open(path).convert("RGB")
+        img = np.asarray(img)
     elif data_type.find('npy') >= 0:
         img = np.load(path)
     else:

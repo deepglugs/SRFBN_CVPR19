@@ -1,5 +1,5 @@
 import argparse, time, os
-import imageio
+from PIL import Image
 
 import options.options as option
 from utils import util
@@ -50,6 +50,16 @@ def main():
 
         need_HR = False if test_loader.dataset.__class__.__name__.find('LRHR') < 0 else True
 
+        if need_HR:
+            save_img_path = os.path.join('./results/SR/'+degrad, model_name, bm, "x%d"%scale)
+        else:
+            save_img_path = os.path.join('./results/SR/'+bm, model_name, "x%d"%scale)
+
+        if "output" in opt:
+            save_img_path = opt["output"]
+
+        if not os.path.exists(save_img_path): os.makedirs(save_img_path)
+
         for iter, batch in enumerate(test_loader):
             solver.feed_data(batch, need_HR=need_HR)
 
@@ -60,7 +70,7 @@ def main():
             total_time.append((t1 - t0))
 
             visuals = solver.get_current_visual(need_HR=need_HR)
-            sr_list.append(visuals['SR'])
+            # sr_list.append(visuals['SR'])
 
             # calculate PSNR/SSIM metrics on Python
             if need_HR:
@@ -78,6 +88,13 @@ def main():
                                                            os.path.basename(batch['LR_path'][0]),
                                                            (t1 - t0)))
 
+            print("===> Saving SR images of [%s]... Save Path: [%s]\n" % (bm, save_img_path))
+            img_fn = os.path.join(save_img_path, path_list[-1])
+            if img_fn.endswith(".webp"):
+                Image.fromarray(visuals['SR']).save(img_fn, "WEBP", lossless=True)
+            else:
+                Image.fromarray(visuals['SR']).save(img_fn)
+
         if need_HR:
             print("---- Average PSNR(dB) /SSIM /Speed(s) for [%s] ----" % bm)
             print("PSNR: %.2f      SSIM: %.4f      Speed: %.4f" % (sum(total_psnr)/len(total_psnr),
@@ -87,17 +104,8 @@ def main():
             print("---- Average Speed(s) for [%s] is %.4f sec ----" % (bm,
                                                                       sum(total_time)/len(total_time)))
 
-        # save SR results for further evaluation on MATLAB
-        if need_HR:
-            save_img_path = os.path.join('./results/SR/'+degrad, model_name, bm, "x%d"%scale)
-        else:
-            save_img_path = os.path.join('./results/SR/'+bm, model_name, "x%d"%scale)
-
-        print("===> Saving SR images of [%s]... Save Path: [%s]\n" % (bm, save_img_path))
-
-        if not os.path.exists(save_img_path): os.makedirs(save_img_path)
-        for img, name in zip(sr_list, path_list):
-            imageio.imwrite(os.path.join(save_img_path, name), img)
+        #for img, name in zip(sr_list, path_list):
+        #    imageio.imwrite(os.path.join(save_img_path, name), img)
 
     print("==================================================")
     print("===> Finished !")
