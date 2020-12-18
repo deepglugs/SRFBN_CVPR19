@@ -11,7 +11,10 @@ from data import create_dataset
 def main():
     parser = argparse.ArgumentParser(description='Test Super Resolution Models')
     parser.add_argument('-opt', type=str, required=True, help='Path to options JSON file.')
-    opt = option.parse(parser.parse_args().opt)
+    parser.add_argument('--input', default=None)
+    parser.add_argument('--output', default=None)
+    args = parser.parse_args()
+    opt = option.parse(args.opt)
     opt = option.dict_to_nonedict(opt)
 
     # initial configure
@@ -25,6 +28,11 @@ def main():
     bm_names =[]
     test_loaders = []
     for _, dataset_opt in sorted(opt['datasets'].items()):
+
+        if args.input is not None:
+            dataset_opt["dataroot_LR"] = args.input
+            print(dataset_opt)
+
         test_set = create_dataset(dataset_opt)
         test_loader = create_dataloader(test_set, dataset_opt)
         test_loaders.append(test_loader)
@@ -57,6 +65,9 @@ def main():
 
         if "output" in opt:
             save_img_path = opt["output"]
+
+        if args.output is not None:
+            save_img_path = args.output
 
         if not os.path.exists(save_img_path): os.makedirs(save_img_path)
 
@@ -98,8 +109,8 @@ def main():
         if need_HR:
             print("---- Average PSNR(dB) /SSIM /Speed(s) for [%s] ----" % bm)
             print("PSNR: %.2f      SSIM: %.4f      Speed: %.4f" % (sum(total_psnr)/len(total_psnr),
-                                                                  sum(total_ssim)/len(total_ssim),
-                                                                  sum(total_time)/len(total_time)))
+                                                                   sum(total_ssim)/len(total_ssim),
+                                                                   sum(total_time)/len(total_time)))
         else:
             print("---- Average Speed(s) for [%s] is %.4f sec ----" % (bm,
                                                                       sum(total_time)/len(total_time)))

@@ -302,7 +302,10 @@ class SRSolver(BaseSolver):
                     self.records = checkpoint['records']
 
             else:
-                checkpoint = torch.load(model_path)
+                if torch.cuda.is_available():
+                    checkpoint = torch.load(model_path)
+                else:
+                    checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
                 if 'state_dict' in checkpoint.keys(): checkpoint = checkpoint['state_dict']
                 load_func = self.model.load_state_dict if isinstance(self.model, nn.DataParallel) \
                     else self.model.module.load_state_dict
